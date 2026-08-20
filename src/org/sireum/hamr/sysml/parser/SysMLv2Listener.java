@@ -1,4 +1,4 @@
-// Generated from /Users/belt/devel/sireum/hamr-sysml-parser/src/org/sireum/hamr/sysml/parser/SysMLv2.g4 by ANTLR 4.13.2
+// Generated from /Users/aaurandt/Documents/INSPECTA/hamr-sysml-parser/src/org/sireum/hamr/sysml/parser/SysMLv2.g4 by ANTLR 4.13.2
 package org.sireum.hamr.sysml.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -8803,6 +8803,26 @@ public interface SysMLv2Listener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRuleCompute(SysMLv2Parser.RuleComputeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SysMLv2Parser#ruleMonitor}.
+	 * @param ctx the parse tree
+	 */
+	void enterRuleMonitor(SysMLv2Parser.RuleMonitorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SysMLv2Parser#ruleMonitor}.
+	 * @param ctx the parse tree
+	 */
+	void exitRuleMonitor(SysMLv2Parser.RuleMonitorContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SysMLv2Parser#ruleAlertStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterRuleAlertStatement(SysMLv2Parser.RuleAlertStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SysMLv2Parser#ruleAlertStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitRuleAlertStatement(SysMLv2Parser.RuleAlertStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SysMLv2Parser#ruleComposition}.
 	 * @param ctx the parse tree

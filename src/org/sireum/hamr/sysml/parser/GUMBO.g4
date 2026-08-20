@@ -1,4 +1,4 @@
-// Auto-generated from /Users/belt/devel/sireum/hamr-sysml-parser/src/org/sireum/hamr/sysml/parser/Internal_Gumbo_mod.g
+// Auto-generated from /Users/aaurandt/Documents/INSPECTA/hamr-sysml-parser/src/org/sireum/hamr/sysml/parser/Internal_Gumbo_mod.g
 grammar GUMBO;
 
 @parser::members {
@@ -11,6 +11,9 @@ grammar GUMBO;
       case GUMBOLexer.K_INITIALIZE:
       case GUMBOLexer.K_COMPUTE:
       case GUMBOLexer.K_COMPUTE_CASES:
+      case GUMBOLexer.K_MONITOR:
+      case GUMBOLexer.K_ALERT:
+      case GUMBOLexer.K_ON:
       case GUMBOLexer.K_COMPOSITION:
       case GUMBOLexer.K_COMPONENTS:
       case GUMBOLexer.K_PORTS:
@@ -72,7 +75,7 @@ ruleGumboLibrary:  ruleFunctions?;
 
 ruleGumboSubclause:  ruleSpecSection;
 
-ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleComposition*;
+ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleMonitor? ruleComposition*;
 
 ruleState: 'state' ruleStateVarDecl+;
 
@@ -89,6 +92,10 @@ ruleInitialize:  'initialize' (ruleSlangModifies ';')? ruleInitializeSpecStateme
 ruleInitializeSpecStatement: ruleGuaranteeStatement;
 
 ruleCompute:  'compute' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* ('compute_cases' ruleCaseStatementClause+)* ruleHandlerClause* ruleInfoFlowClause*;
+
+ruleMonitor:  'monitor' ruleGuaranteeStatement* ruleAlertStatement*;
+
+ruleAlertStatement: 'alert' RULE_ID 'on' RULE_ID ';';
 
 ruleComposition: 'composition' RULE_ID '{' ruleScheduleComponentAliases? ruleSchedulePortAliases? ruleScheduleStateVarAliases? ruleSchema ruleCompositionProperty* '}';
 
@@ -452,6 +459,9 @@ K_INTEGRATION: 'integration';
 K_INITIALIZE: 'initialize';
 K_COMPUTE: 'compute';
 K_COMPUTE_CASES: 'compute_cases';
+K_MONITOR: 'monitor';
+K_ALERT: 'alert';
+K_ON: 'on';
 K_COMPOSITION: 'composition';
 K_COMPONENTS: 'components';
 K_PORTS: 'ports';

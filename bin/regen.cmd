@@ -28,7 +28,7 @@ val cleanup: B = T
 val keywords: ISZ[String] = ISZ("\"GUMBO\"", "@strictpure", "@pure", "@spec")
 
 val sysmlVersion: String = "2026-04" // https://github.com/Systems-Modeling/SysML-v2-Pilot-Implementation/tags
-val gumboVersion: String = "4.20260625.67d46a8" // https://github.com/sireum/aadl-gumbo/tags
+val gumboVersion: String = "4.20260820.63a860a" // https://github.com/aaurandt/aadl-gumbo/tags
 
 val antlr4Version: String =
   if (versions.exists) versions.properties.get("org.antlr%antlr4-runtime%").get
@@ -39,7 +39,7 @@ assert(ops.StringOps(proc"$sireum hamr sysml translator --help".runCheck().out).
 
 val sysmlUrl: String = s"https://raw.githubusercontent.com/Systems-Modeling/SysML-v2-Pilot-Implementation/${sysmlVersion}/org.omg.sysml.xtext/src-gen/org/omg/sysml/xtext/parser/antlr/internal/InternalSysML.g"
 val sysmlUrlH: String = s"https://raw.githubusercontent.com/Systems-Modeling/SysML-v2-Pilot-Implementation/%version/org.omg.sysml.xtext/src-gen/org/omg/sysml/xtext/parser/antlr/internal/InternalSysML.g"
-val gumboUrl: String = s"https://raw.githubusercontent.com/sireum/aadl-gumbo/${gumboVersion}/org.sireum.aadl.gumbo/src-gen/org/sireum/aadl/gumbo/parser/antlr/internal/InternalGumbo.g"
+val gumboUrl: String = s"https://raw.githubusercontent.com/aaurandt/aadl-gumbo/${gumboVersion}/org.sireum.aadl.gumbo/src-gen/org/sireum/aadl/gumbo/parser/antlr/internal/InternalGumbo.g"
 val kermlUrl: String = "https://raw.githubusercontent.com/Systems-Modeling/SysML-v2-Pilot-Implementation/%version/org.omg.kerml.xtext/src-gen/org/omg/kerml/xtext/parser/antlr/internal/InternalKerML.g"
 val kermlExpUrl: String = s"https://raw.githubusercontent.com/Systems-Modeling/SysML-v2-Pilot-Implementation/${sysmlVersion}/org.omg.kerml.expressions.xtext/src-gen/org/omg/kerml/expressions/xtext/parser/antlr/internal/InternalKerMLExpressions.g"
 
