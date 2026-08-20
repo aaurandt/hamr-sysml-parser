@@ -1,4 +1,4 @@
-// Custom SysMLv2 grammar in which GUMBO (minus its expression language) has been injected and
+// Custom SysMLv2 grammar in which GUMBO clauses and temporal expressions have been injected and
 // with modifications made to rules 'ruleTextualRepresentation' and 'RULE_REGULAR_COMMENT'
 //
 // Original grammars obtained from:
@@ -1375,7 +1375,19 @@ ruleXorExpression: ruleAndExpression ( ruleXorOperator ruleAndExpression)*;
 
 ruleXorOperator: 'xor';
 
-ruleAndExpression: ruleEqualityExpression ( (ruleAndOperator ruleEqualityExpression | ruleConditionalAndOperator ruleEqualityExpressionReference))*;
+ruleAndExpression: ruleBinaryTemporalExpression ( (ruleAndOperator ruleBinaryTemporalExpression | ruleConditionalAndOperator ruleBinaryTemporalExpressionReference))*;
+
+ruleBinaryTemporalExpressionReference: ruleBinaryTemporalExpression;
+
+ruleBinaryTemporalExpression: ruleUnaryTemporalExpression (ruleTemporalBinaryOperator ruleTemporalInterval ruleUnaryTemporalExpression)*;
+
+ruleUnaryTemporalExpression: ruleTemporalUnaryOperator ruleTemporalInterval ruleUnaryTemporalExpression | ruleEqualityExpression;
+
+ruleTemporalUnaryOperator: 'Future' | 'Eventually' | 'Globally' | 'Always' | 'Once' | 'Historically';
+
+ruleTemporalBinaryOperator: 'Until' | 'Release' | 'Since' | 'Trigger';
+
+ruleTemporalInterval: '[' RULE_DECIMAL_VALUE ',' RULE_DECIMAL_VALUE ']';
 
 ruleAndOperator: '&';
 
