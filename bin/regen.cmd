@@ -2,7 +2,7 @@
 @ 2>/dev/null # 2>nul & echo off & goto BOF         #
 if [ -z ${SIREUM_HOME} ]; then                      #
   echo "Please set SIREUM_HOME env var"             #
-  exit -1                                           #
+  exit -1                                           #git
 fi                                                  #
 exec ${SIREUM_HOME}/bin/sireum slang run "$0" "$@"  #
 :BOF
@@ -28,7 +28,7 @@ val cleanup: B = T
 val keywords: ISZ[String] = ISZ("\"GUMBO\"", "@strictpure", "@pure", "@spec")
 
 val sysmlVersion: String = "2026-04" // https://github.com/Systems-Modeling/SysML-v2-Pilot-Implementation/tags
-val gumboVersion: String = "4.20260625.67d46a8" // https://github.com/sireum/aadl-gumbo/tags
+val gumboVersion: String = "4.20260903.fffceb9" // https://github.com/sireum/aadl-gumbo/tags
 
 val antlr4Version: String =
   if (versions.exists) versions.properties.get("org.antlr%antlr4-runtime%").get
@@ -108,6 +108,7 @@ sysmlp.writeOver(sysmlMod)
 
 val sysmlg = translate(parserDir, "SysMLv2.g4", F, None(), sysmlp.value)
 addTemporalExpressions(sysmlg)
+unreserveGumboKeywords(sysmlg, gumboMinusSlangExp, sysmlOrig.read)
 fixSL_Note(sysmlg)
 changeComment(sysmlg, sysmlUrl, gumboUrl)
 regenAntrl(sysmlg, parserDir)
@@ -181,6 +182,129 @@ object Util {
           |
           |ruleTemporalInterval: '[' RULE_DECIMAL_VALUE ',' RULE_DECIMAL_VALUE ']';""".render
     path.writeOver(replace(path.read, o, o, m))
+  }
+
+  // Splicing GUMBO into SysMLv2 makes every GUMBO parser-rule literal an implicit ANTLR token, so a
+  // GUMBO keyword shadows any SysMLv2 identifier spelled the same way. The SysML v2 pilot models use
+  // 'on' as a state name and 'monitor' as an action name, and an older release used 'cases'. Widen
+  // ruleName so those stay usable as names.
+  //
+  // The set is computed (GUMBO's spliced keywords minus SysMLv2's own) rather than curated, so a new
+  // GUMBO keyword is covered automatically. Subtracting SysMLv2's keywords is the safety property:
+  // unreserving one of its own ('state', 'case', 'if', ...) would break SysMLv2 itself.
+  //
+  // Keywords are added inside the existing #ruleName1 alternative on purpose: SysMLAstBuilder.visitName
+  // matches on RuleName1Context and reads getChild(0) as a TerminalNode, so no AST builder change is
+  // needed. A new labelled alternative would fall through to its halt.
+  def unreserveGumboKeywords(path: Os.Path, gumboPortion: String, sysmlPortion: String): Unit = {
+    // added by addTemporalExpressions, so not present in either input
+    val temporal: ISZ[String] = ISZ("Future", "Eventually", "Globally", "Always", "Once",
+      "Historically", "Until", "Release", "Since", "Trigger")
+
+    val sysmlKws = keywordsOf(sysmlPortion)
+    val content = path.read
+    var kws = HashSSet.empty[String]
+    for (k <- keywordsOf(gumboPortion).elements ++ temporal) {
+      if (!sysmlKws.contains(k)) {
+        // Guard: only unreserve something that really is a keyword in the generated grammar.
+        // Listing a non-keyword would create a new reserved word instead of removing one.
+        if (!ops.StringOps(content).contains(st"'$k'".render)) {
+          halt(s"unreserveGumboKeywords: '$k' is not a keyword in ${path.name}")
+        }
+        kws = kws + k
+      }
+    }
+
+    val alts: ISZ[ST] = for (k <- kws.elements) yield st"| '$k'"
+    val o =
+      st"""ruleName:
+          |  RULE_ID #ruleName1
+          |  | RULE_UNRESTRICTED_NAME #ruleName2;""".render
+    val m =
+      st"""ruleName:
+          |  ( RULE_ID
+          |  ${(alts, "\n  ")} ) #ruleName1
+          |  | RULE_UNRESTRICTED_NAME #ruleName2;""".render
+    println(st"Unreserved ${kws.size} GUMBO keywords in ruleName: ${(kws.elements, ", ")}".render)
+    path.writeOver(replace(content, o, o, m))
+  }
+
+  // Keyword literals appearing in parser rules. Lexer rules are skipped so that character literals
+  // such as 'a'..'z' in RULE_ID are not mistaken for keywords.
+  @pure def keywordsOf(content: String): HashSSet[String] = {
+    var r = HashSSet.empty[String]
+    for (line <- ops.StringOps(content).split((c: C) => c == '\n')) {
+      if (!isLexerRuleLine(line)) {
+        val cis = conversions.String.toCis(line)
+        var i = 0
+        while (i < cis.size) {
+          if (cis(i) == '\'') {
+            var j = i + 1
+            while (j < cis.size && cis(j) != '\'') {
+              j = j + 1
+            }
+            if (j < cis.size) {
+              val lit = ops.StringOps(line).substring(i + 1, j)
+              if (isIdentifier(lit)) {
+                r = r + lit
+              }
+              i = j + 1
+            } else {
+              i = cis.size
+            }
+          } else {
+            i = i + 1
+          }
+        }
+      }
+    }
+    return r
+  }
+
+  @strictpure def isIdStart(c: C): B = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+
+  @strictpure def isIdPart(c: C): B = isIdStart(c) || (c >= '0' && c <= '9')
+
+  @pure def isIdentifier(s: String): B = {
+    val cis = conversions.String.toCis(s)
+    if (cis.size == 0 || !isIdStart(cis(0))) {
+      return F
+    }
+    var i = 1
+    while (i < cis.size) {
+      if (!isIdPart(cis(i))) {
+        return F
+      }
+      i = i + 1
+    }
+    return T
+  }
+
+  // A lexer rule (or fragment) starts with an upper-case/underscore name followed by ':'.
+  @pure def isLexerRuleLine(line: String): B = {
+    val cis = conversions.String.toCis(line)
+    var i = 0
+    while (i < cis.size && (cis(i) == ' ' || cis(i) == '\t')) {
+      i = i + 1
+    }
+    if (i >= cis.size) {
+      return F
+    }
+    val c0 = cis(i)
+    if (!((c0 >= 'A' && c0 <= 'Z') || c0 == '_')) {
+      return F
+    }
+    while (i < cis.size) {
+      val c = cis(i)
+      if (c == ':') {
+        return T
+      }
+      if (!isIdPart(c) && c != ' ' && c != '\t') {
+        return F
+      }
+      i = i + 1
+    }
+    return F
   }
 
   def replace(content: String, searchStr: String, from: String, to: String): String = {
@@ -350,5 +474,5 @@ object Util {
                                   |			newLeafNode(enumLiteral_0, grammarAccess.getRequirementVerificationKindAccess().getRequirementEnumLiteralDeclaration());
                                   |		}
                                   |	)
-                                  |;"""render
+                                  |;""".render
 }

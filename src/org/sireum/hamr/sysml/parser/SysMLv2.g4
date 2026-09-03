@@ -3,7 +3,7 @@
 //
 // Original grammars obtained from:
 //   https://raw.githubusercontent.com/Systems-Modeling/SysML-v2-Pilot-Implementation/2026-04/org.omg.sysml.xtext/src-gen/org/omg/sysml/xtext/parser/antlr/internal/InternalSysML.g
-//   https://raw.githubusercontent.com/sireum/aadl-gumbo/4.20260625.67d46a8/org.sireum.aadl.gumbo/src-gen/org/sireum/aadl/gumbo/parser/antlr/internal/InternalGumbo.g
+//   https://raw.githubusercontent.com/sireum/aadl-gumbo/4.20260903.fffceb9/org.sireum.aadl.gumbo/src-gen/org/sireum/aadl/gumbo/parser/antlr/internal/InternalGumbo.g
 
 grammar SysMLv2;
 
@@ -144,7 +144,11 @@ grammar SysMLv2;
       case SysMLv2Lexer.K_INTEGRATION:
       case SysMLv2Lexer.K_INITIALIZE:
       case SysMLv2Lexer.K_COMPUTE:
+      case SysMLv2Lexer.K_CASES:
       case SysMLv2Lexer.K_COMPUTE_CASES:
+      case SysMLv2Lexer.K_MONITOR:
+      case SysMLv2Lexer.K_ALERT:
+      case SysMLv2Lexer.K_ON:
       case SysMLv2Lexer.K_COMPOSITION:
       case SysMLv2Lexer.K_COMPONENTS:
       case SysMLv2Lexer.K_PORTS:
@@ -1372,7 +1376,19 @@ ruleXorExpression: ruleAndExpression ( ruleXorOperator ruleAndExpression)*;
 
 ruleXorOperator: 'xor';
 
-ruleAndExpression: ruleEqualityExpression ( (ruleAndOperator ruleEqualityExpression | ruleConditionalAndOperator ruleEqualityExpressionReference))*;
+ruleAndExpression: ruleBinaryTemporalExpression ( (ruleAndOperator ruleBinaryTemporalExpression | ruleConditionalAndOperator ruleBinaryTemporalExpressionReference))*;
+
+ruleBinaryTemporalExpressionReference: ruleBinaryTemporalExpression;
+
+ruleBinaryTemporalExpression: ruleUnaryTemporalExpression (ruleTemporalBinaryOperator ruleTemporalInterval ruleUnaryTemporalExpression)*;
+
+ruleUnaryTemporalExpression: ruleTemporalUnaryOperator ruleTemporalInterval ruleUnaryTemporalExpression | ruleEqualityExpression;
+
+ruleTemporalUnaryOperator: 'Future' | 'Eventually' | 'Globally' | 'Always' | 'Once' | 'Historically';
+
+ruleTemporalBinaryOperator: 'Until' | 'Release' | 'Since' | 'Trigger';
+
+ruleTemporalInterval: '[' RULE_DECIMAL_VALUE ',' RULE_DECIMAL_VALUE ']';
 
 ruleAndOperator: '&';
 
@@ -1569,7 +1585,44 @@ ruleRealValue:
 ruleLiteralInfinity:  '*';
 
 ruleName:
-  RULE_ID #ruleName1
+  ( RULE_ID
+  | 'invariants'
+    | 'inv'
+    | 'integration'
+    | 'initialize'
+    | 'compute'
+    | 'cases'
+    | 'compute_cases'
+    | 'monitor'
+    | 'alert'
+    | 'on'
+    | 'composition'
+    | 'components'
+    | 'ports'
+    | 'schema'
+    | 'label'
+    | 'split'
+    | 'sequence'
+    | 'property'
+    | 'before'
+    | 'infoflow'
+    | 'handle'
+    | 'guarantee'
+    | 'functions'
+    | 'mut'
+    | 'invariant'
+    | 'reads'
+    | 'modifies'
+    | 'Future'
+    | 'Eventually'
+    | 'Globally'
+    | 'Always'
+    | 'Once'
+    | 'Historically'
+    | 'Until'
+    | 'Release'
+    | 'Since'
+    | 'Trigger' ) #ruleName1
   | RULE_UNRESTRICTED_NAME #ruleName2;
 
 ruleGlobalQualification: '$' '::';
@@ -1612,7 +1665,7 @@ ruleGumboLibrary:  ruleFunctions?;
 
 ruleGumboSubclause:  ruleSpecSection;
 
-ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleComposition*;
+ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleMonitor? ruleComposition*;
 
 ruleState: 'state' ruleStateVarDecl+;
 
@@ -1628,7 +1681,11 @@ ruleInitialize:  'initialize' (ruleSlangModifies ';')? ruleInitializeSpecStateme
 
 ruleInitializeSpecStatement: ruleGuaranteeStatement;
 
-ruleCompute:  'compute' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* ('compute_cases' ruleCaseStatementClause+)* ruleHandlerClause* ruleInfoFlowClause*;
+ruleCompute:  'compute' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* (('cases' | 'compute_cases') ruleCaseStatementClause+)* ruleHandlerClause* ruleInfoFlowClause*;
+
+ruleMonitor:  'monitor' ruleGuaranteeStatement* ruleAlertStatement*;
+
+ruleAlertStatement: 'alert' RULE_ID 'on' RULE_ID ';';
 
 ruleComposition: 'composition' RULE_ID '{' ruleScheduleComponentAliases? ruleSchedulePortAliases? ruleScheduleStateVarAliases? ruleSchema ruleCompositionProperty* '}';
 
@@ -1676,7 +1733,7 @@ ruleSchemaPoint:
 
 ruleInfoFlowClause: 'infoflow' RULE_ID RULE_STRING_VALUE? ':' 'from' '(' (RULE_ID (',' RULE_ID)*)? ')' ',' 'to' '(' (RULE_ID (',' RULE_ID)*)? ')' ';';
 
-ruleHandlerClause: 'handle' RULE_ID ':' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* ('compute_cases' ruleCaseStatementClause+)*;
+ruleHandlerClause: 'handle' RULE_ID ':' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* (('cases' | 'compute_cases') ruleCaseStatementClause+)*;
 
 ruleCaseStatementClause: 'case' RULE_ID RULE_STRING_VALUE? ':' ruleAnonAssumeStatement? ruleAnonGuaranteeStatement;
 
@@ -1867,7 +1924,11 @@ K_INV: 'inv';
 K_INTEGRATION: 'integration';
 K_INITIALIZE: 'initialize';
 K_COMPUTE: 'compute';
+K_CASES: 'cases';
 K_COMPUTE_CASES: 'compute_cases';
+K_MONITOR: 'monitor';
+K_ALERT: 'alert';
+K_ON: 'on';
 K_COMPOSITION: 'composition';
 K_COMPONENTS: 'components';
 K_PORTS: 'ports';

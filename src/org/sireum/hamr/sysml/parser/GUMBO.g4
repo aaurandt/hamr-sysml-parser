@@ -10,7 +10,11 @@ grammar GUMBO;
       case GUMBOLexer.K_INTEGRATION:
       case GUMBOLexer.K_INITIALIZE:
       case GUMBOLexer.K_COMPUTE:
+      case GUMBOLexer.K_CASES:
       case GUMBOLexer.K_COMPUTE_CASES:
+      case GUMBOLexer.K_MONITOR:
+      case GUMBOLexer.K_ALERT:
+      case GUMBOLexer.K_ON:
       case GUMBOLexer.K_COMPOSITION:
       case GUMBOLexer.K_COMPONENTS:
       case GUMBOLexer.K_PORTS:
@@ -72,7 +76,7 @@ ruleGumboLibrary:  ruleFunctions?;
 
 ruleGumboSubclause:  ruleSpecSection;
 
-ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleComposition*;
+ruleSpecSection:  ruleState? ruleFunctions? ruleInvariants? ruleIntegration? ruleInitialize? ruleCompute? ruleMonitor? ruleComposition*;
 
 ruleState: 'state' ruleStateVarDecl+;
 
@@ -88,7 +92,11 @@ ruleInitialize:  'initialize' (ruleSlangModifies ';')? ruleInitializeSpecStateme
 
 ruleInitializeSpecStatement: ruleGuaranteeStatement;
 
-ruleCompute:  'compute' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* ('compute_cases' ruleCaseStatementClause+)* ruleHandlerClause* ruleInfoFlowClause*;
+ruleCompute:  'compute' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* (('cases' | 'compute_cases') ruleCaseStatementClause+)* ruleHandlerClause* ruleInfoFlowClause*;
+
+ruleMonitor:  'monitor' ruleGuaranteeStatement* ruleAlertStatement*;
+
+ruleAlertStatement: 'alert' RULE_ID 'on' RULE_ID ';';
 
 ruleComposition: 'composition' RULE_ID '{' ruleScheduleComponentAliases? ruleSchedulePortAliases? ruleScheduleStateVarAliases? ruleSchema ruleCompositionProperty* '}';
 
@@ -136,7 +144,7 @@ ruleSchemaPoint:
 
 ruleInfoFlowClause: 'infoflow' RULE_ID RULE_STRING_VALUE? ':' 'from' '(' (RULE_ID (',' RULE_ID)*)? ')' ',' 'to' '(' (RULE_ID (',' RULE_ID)*)? ')' ';';
 
-ruleHandlerClause: 'handle' RULE_ID ':' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* ('compute_cases' ruleCaseStatementClause+)*;
+ruleHandlerClause: 'handle' RULE_ID ':' (ruleSlangModifies ';')? ruleAssumeStatement* ruleGuaranteeStatement* (('cases' | 'compute_cases') ruleCaseStatementClause+)*;
 
 ruleCaseStatementClause: 'case' RULE_ID RULE_STRING_VALUE? ':' ruleAnonAssumeStatement? ruleAnonGuaranteeStatement;
 
@@ -451,7 +459,11 @@ K_INV: 'inv';
 K_INTEGRATION: 'integration';
 K_INITIALIZE: 'initialize';
 K_COMPUTE: 'compute';
+K_CASES: 'cases';
 K_COMPUTE_CASES: 'compute_cases';
+K_MONITOR: 'monitor';
+K_ALERT: 'alert';
+K_ON: 'on';
 K_COMPOSITION: 'composition';
 K_COMPONENTS: 'components';
 K_PORTS: 'ports';
